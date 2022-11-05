@@ -1,8 +1,8 @@
 use std::fmt::{self, Write};
 
 use lang_c::ast::*;
-use lang_c::driver::{Config, parse};
-use lang_c::span::{Span};
+use lang_c::driver::{parse, Config};
+use lang_c::span::Span;
 use lang_c::visit::*;
 
 pub struct Printer<'a> {
@@ -44,7 +44,8 @@ impl<'a> Printer<'a> {
     }
 
     fn write_comma_sep<T, U>(&mut self, vec: &Vec<T>, action: U)
-        where U: Fn(&mut Self, &T) -> ()
+    where
+        U: Fn(&mut Self, &T) -> (),
     {
         for (i, parameter) in vec.iter().enumerate() {
             if i > 0 && vec.len() > 1 {
@@ -63,11 +64,10 @@ impl<'ast, 'a> Visit<'ast> for Printer<'a> {
     fn visit_constant(&mut self, n: &'ast Constant, span: &'ast Span) {
         visit_constant(self, n, span);
     }
-    //fn visit_integer(&mut self, n: &'ast Integer, span: &'ast Span) {
-    //    self.name("Integer");
-    //    self.field_str(&n.number);
-    //    visit_integer(self, n, span);
-    //}
+    fn visit_integer(&mut self, n: &'ast Integer, span: &'ast Span) {
+        self.write(&n.number);
+        visit_integer(self, n, span);
+    }
     //fn visit_integer_base(&mut self, n: &'ast IntegerBase, span: &'ast Span) {
     //    self.name("IntegerBase");
     //    self.field(match *n {
@@ -205,50 +205,52 @@ impl<'ast, 'a> Visit<'ast> for Printer<'a> {
     //    self.name("CastExpression");
     //    visit_cast_expression(self, n, span);
     //}
-    //fn visit_binary_operator(&mut self, n: &'ast BinaryOperator, span: &'ast Span) {
-    //    self.name("BinaryOperator");
-    //    self.field(match *n {
-    //        BinaryOperator::Index => "Index",
-    //        BinaryOperator::Multiply => "Multiply",
-    //        BinaryOperator::Divide => "Divide",
-    //        BinaryOperator::Modulo => "Modulo",
-    //        BinaryOperator::Plus => "Plus",
-    //        BinaryOperator::Minus => "Minus",
-    //        BinaryOperator::ShiftLeft => "ShiftLeft",
-    //        BinaryOperator::ShiftRight => "ShiftRight",
-    //        BinaryOperator::Less => "Less",
-    //        BinaryOperator::Greater => "Greater",
-    //        BinaryOperator::LessOrEqual => "LessOrEqual",
-    //        BinaryOperator::GreaterOrEqual => "GreaterOrEqual",
-    //        BinaryOperator::Equals => "Equals",
-    //        BinaryOperator::NotEquals => "NotEquals",
-    //        BinaryOperator::BitwiseAnd => "BitwiseAnd",
-    //        BinaryOperator::BitwiseXor => "BitwiseXor",
-    //        BinaryOperator::BitwiseOr => "BitwiseOr",
-    //        BinaryOperator::LogicalAnd => "LogicalAnd",
-    //        BinaryOperator::LogicalOr => "LogicalOr",
-    //        BinaryOperator::Assign => "Assign",
-    //        BinaryOperator::AssignMultiply => "AssignMultiply",
-    //        BinaryOperator::AssignDivide => "AssignDivide",
-    //        BinaryOperator::AssignModulo => "AssignModulo",
-    //        BinaryOperator::AssignPlus => "AssignPlus",
-    //        BinaryOperator::AssignMinus => "AssignMinus",
-    //        BinaryOperator::AssignShiftLeft => "AssignShiftLeft",
-    //        BinaryOperator::AssignShiftRight => "AssignShiftRight",
-    //        BinaryOperator::AssignBitwiseAnd => "AssignBitwiseAnd",
-    //        BinaryOperator::AssignBitwiseXor => "AssignBitwiseXor",
-    //        BinaryOperator::AssignBitwiseOr => "AssignBitwiseOr",
-    //    });
-    //    visit_binary_operator(self, n, span);
-    //}
-    //fn visit_binary_operator_expression(
-    //    &mut self,
-    //    n: &'ast BinaryOperatorExpression,
-    //    span: &'ast Span,
-    //) {
-    //    self.name("BinaryOperatorExpression");
-    //    visit_binary_operator_expression(self, n, span);
-    //}
+    fn visit_binary_operator(&mut self, n: &'ast BinaryOperator, span: &'ast Span) {
+        self.space();
+        self.write(match *n {
+            BinaryOperator::Index => "TODOIndex",
+            BinaryOperator::Multiply => "*",
+            BinaryOperator::Divide => "/",
+            BinaryOperator::Modulo => "%",
+            BinaryOperator::Plus => "+",
+            BinaryOperator::Minus => "-",
+            BinaryOperator::ShiftLeft => "<<",
+            BinaryOperator::ShiftRight => ">>",
+            BinaryOperator::Less => "<",
+            BinaryOperator::Greater => ">",
+            BinaryOperator::LessOrEqual => "<=",
+            BinaryOperator::GreaterOrEqual => ">=",
+            BinaryOperator::Equals => "==",
+            BinaryOperator::NotEquals => "!=",
+            BinaryOperator::BitwiseAnd => "&",
+            BinaryOperator::BitwiseXor => "^",
+            BinaryOperator::BitwiseOr => "|",
+            BinaryOperator::LogicalAnd => "&&",
+            BinaryOperator::LogicalOr => "||",
+            BinaryOperator::Assign => "=",
+            BinaryOperator::AssignMultiply => "*=",
+            BinaryOperator::AssignDivide => "/=",
+            BinaryOperator::AssignModulo => "%=",
+            BinaryOperator::AssignPlus => "+=",
+            BinaryOperator::AssignMinus => "-=",
+            BinaryOperator::AssignShiftLeft => "<<=",
+            BinaryOperator::AssignShiftRight => ">>=",
+            BinaryOperator::AssignBitwiseAnd => "&=",
+            BinaryOperator::AssignBitwiseXor => "^=",
+            BinaryOperator::AssignBitwiseOr => "|=",
+        });
+        self.space();
+        visit_binary_operator(self, n, span);
+    }
+    fn visit_binary_operator_expression(
+        &mut self,
+        n: &'ast BinaryOperatorExpression,
+        _span: &'ast Span,
+    ) {
+        self.visit_expression(&n.lhs.node, &n.lhs.span);
+        self.visit_binary_operator(&n.operator.node, &n.operator.span);
+        self.visit_expression(&n.rhs.node, &n.rhs.span);
+    }
     //fn visit_conditional_expression(&mut self, n: &'ast ConditionalExpression, span: &'ast Span) {
     //    self.name("ConditionalExpression");
     //    visit_conditional_expression(self, n, span);
@@ -272,19 +274,13 @@ impl<'ast, 'a> Visit<'ast> for Printer<'a> {
     //}
     fn visit_declaration(&mut self, n: &'ast Declaration, span: &'ast Span) {
         self.write_indent();
-        pub fn visit_declaration<'ast, V: Visit<'ast> + ?Sized>(
-            visitor: &mut V,
-            declaration: &'ast Declaration,
-            _span: &'ast Span,
-        ) {
-            for specifier in &declaration.specifiers {
-                visitor.visit_declaration_specifier(&specifier.node, &specifier.span);
-            }
-        
-            for declarator in &declaration.declarators {
-                visitor.visit_init_declarator(&declarator.node, &declarator.span);
-            }
+        for specifier in &n.specifiers {
+            self.visit_declaration_specifier(&specifier.node, &specifier.span);
         }
+        self.write_comma_sep(&n.declarators, |cont, decl| {
+            cont.visit_init_declarator(&decl.node, &decl.span);
+        });
+        self.writeln(";")
     }
     fn visit_declaration_specifier(&mut self, n: &'ast DeclarationSpecifier, span: &'ast Span) {
         visit_declaration_specifier(self, n, span);
@@ -453,20 +449,29 @@ impl<'ast, 'a> Visit<'ast> for Printer<'a> {
     //    visit_static_assert(self, n, span);
     //}
     fn visit_statement(&mut self, n: &'ast Statement, span: &'ast Span) {
-        match *n {
+        let is_compound = if let Statement::Compound(_) = *n {
+            true
+        } else {
+            false
+        };
+        if !is_compound {
+            self.write_indent();
+        }
+
+        match &*n {
             Statement::Compound(_) => self.writeln("{"),
-            Statement::Goto(_) => self.write_indented("goto"),
-            Statement::Continue => self.write_indented("continue"),
-            Statement::Break => self.write_indented("break"),
-            Statement::Return(_) => self.write_indented("return"),
+            Statement::Goto(x) => self.write("goto "),
+            Statement::Continue => self.write("continue"),
+            Statement::Break => self.write("break"),
+            Statement::Return(x) => self.write("return "),
+
             _ => {}
         }
-        if let Statement::Compound(_) = *n {
+        if is_compound {
             visit_statement(&mut self.indent(), n, span);
             self.writeln("");
             self.writeln("}");
-        }
-        else {
+        } else {
             visit_statement(self, n, span);
             self.writeln(";");
         }
