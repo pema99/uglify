@@ -460,10 +460,10 @@ impl<'ast, 'a> Visit<'ast> for Printer<'a> {
 
         match &*n {
             Statement::Compound(_) => self.writeln("{"),
-            Statement::Goto(x) => self.write("goto "),
+            Statement::Goto(_) => self.write("goto "),
             Statement::Continue => self.write("continue"),
             Statement::Break => self.write("break"),
-            Statement::Return(x) => self.write("return "),
+            Statement::Return(_) => self.write("return "),
 
             _ => {}
         }
